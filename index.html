@@ -32,7 +32,7 @@ header{background:white;border-bottom:1px solid var(--line);position:sticky;top:
 <div class="field full"><label>পেমেন্ট পদ্ধতি *</label><div class="pay-options"><label><input type="radio" name="payment" value="Cash on Delivery" checked> ক্যাশ অন ডেলিভারি</label><label><input type="radio" name="payment" value="bKash"> বিকাশ</label><label><input type="radio" name="payment" value="Nagad"> নগদ</label></div></div>
 <div class="field full" id="paymentNumberField" style="display:none"><label for="paymentNumber">পেমেন্ট নম্বর/ট্রানজ্যাকশন আইডি (প্রযোজ্য হলে)</label><input id="paymentNumber" maxlength="100" placeholder="পেমেন্টের পরে তথ্য দিন"></div>
 <div class="field full"><label for="note">অতিরিক্ত নির্দেশনা (ঐচ্ছিক)</label><textarea id="note" rows="2" maxlength="300"></textarea></div>
-<div class="field full"><div class="summaryrow"><span>ডেলিভারি চার্জ</span><strong id="deliveryCharge">৳৭০</strong></div><div class="summaryrow total"><span>সর্বমোট</span><strong id="grandTotal">৳০</strong></div><p class="muted">বিকাশ/নগদে টাকা পাঠানোর আগে দোকানের নিশ্চিত পেমেন্ট নম্বর সংগ্রহ করুন। এই ডেমোতে পেমেন্ট স্বয়ংক্রিয়ভাবে নেওয়া হয় না।</p></div>
+<div class="field full"><div class="summaryrow"><span>ডেলিভারি চার্জ</span><strong id="deliveryCharge">৳৮০</strong></div><div class="summaryrow total"><span>সর্বমোট</span><strong id="grandTotal">৳০</strong></div><p class="muted">বিকাশ/নগদে টাকা পাঠানোর আগে দোকানের নিশ্চিত পেমেন্ট নম্বর সংগ্রহ করুন। এই ডেমোতে পেমেন্ট স্বয়ংক্রিয়ভাবে নেওয়া হয় না।</p></div>
 <div class="field full"><button class="primary" id="placeOrder" type="submit">অর্ডার কনফার্ম করুন</button></div>
 </form></section>
 <div id="result" class="panel hidden"></div>
@@ -63,27 +63,73 @@ const money=n=>"৳"+Number(n||0).toLocaleString("bn-BD");
 }
 const safe=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function say(msg,ok=false){const el=document.getElementById("message");el.textContent=msg;el.className="notice"+(ok?" success":"");}
-async function loadProducts(){if(!API_URL.startsWith("https://script.google.com/"))return;try{const r=await fetch(API_URL+"?action=products");const d=await r.json();if(d.products?.length)products=d.products;}catch(e){say("Google Sheets থেকে পণ্য লোড হয়নি; আপাতত নমুনা পণ্য দেখানো হচ্ছে।");}renderCategories();renderProducts();}
-function renderCategories(){const s=document.getElementById("category"),old=s.value;const cats=[...new Set(products.map(p=>p.category).filter(Boolean))];s.innerHTML='<option value="">সব ক্যাটাগরি</option>'+cats.map(c=>`<option>${safe(c)}</option>`).join("");s.value=old;}
-function renderProducts(){const q=document.getElementById("search").value.toLowerCase(),cat=document.getElementById("category").value;const list=products.filter(p=>(p.name+" "+(p.description||"")).toLowerCase().includes(q)&&(!cat||p.category===cat));document.getElementById("productCount").textContent=list.length+"টি পণ্য";document.getElementById("products").innerHTML=list.map(p=>`<article class="card"><div class="photo">${p.image?`<img src="${safe(p.image)}" alt="${safe(p.name)}" onerror="this.parentElement.textContent='🛍️'">`:"🛍️"}</div><div class="cardbody"><h3>${safe(p.name)}</h3><div class="muted">${safe(p.category||"অন্যান্য")}</div><div class="price">${money(p.price)}</div><div class="muted">${safe(p.description||"")}</div><div class="actions"><button class="secondary" onclick="addCart('${safe(p.id)}')">কার্টে যোগ</button><button class="primary" onclick="buyNow('${safe(p.id)}')">Buy Now</button></div></div></article>`).join("")||"<p>কোনো পণ্য পাওয়া যায়নি।</p>";}
-function addCart(id){const p=products.find(x=>String(x.id)===String(id));if(!p)return;cart[id]=Math.min((cart[id]||0)+1,Number(p.stock||99));updateCart();say("পণ্যটি কার্টে যোগ হয়েছে।",true);}
+async function loadProducts(){if(!API_URL.startsWith("https://script.google.com/"))return;try{const r=await fetch(API_URL+"?action=products");
+const d=await r.json();if(d.products?.length)products=d.products;}catch(e){say("Google Sheets থেকে পণ্য লোড হয়নি; আপাতত নমুনা পণ্য দেখানো হচ্ছে।");}renderCategories();renderProducts();}
+function renderCategories(){const s=document.getElementById("category"),old=s.value;
+const cats=[...new Set(products.map(p=>p.category).filter(Boolean))];s.innerHTML='<option value="">সব ক্যাটাগরি</option>'+cats.map(c=>`<option>${safe(c)}</option>`).join("");s.value=old;}
+function renderProducts(){const q=document.getElementById("search").value.toLowerCase(),cat=document.getElementById("category").value;
+const list=products.filter(p=>(p.name+" "+(p.description||"")).toLowerCase().includes(q)&&(!cat||p.category===cat));
+document.getElementById("productCount").textContent=list.length+"টি পণ্য";
+document.getElementById("products").innerHTML=list.map(p=>`<article class="card"><div class="photo">${p.image?`<img src="${safe(p.image)}" alt="${safe(p.name)}" onerror="this.parentElement.textContent='🛍️'">`:"🛍️"}</div><div class="cardbody"><h3>${safe(p.name)}</h3><div class="muted">${safe(p.category||"অন্যান্য")}</div><div class="price">${money(p.price)}</div><div class="muted">${safe(p.description||"")}</div><div class="actions"><button class="secondary" onclick="addCart('${safe(p.id)}')">কার্টে যোগ</button><button class="primary" onclick="buyNow('${safe(p.id)}')">Buy Now</button></div></div></article>`).join("")||"<p>কোনো পণ্য পাওয়া যায়নি।</p>";}
+function addCart(id){const p=products.find(x=>String(x.id)===String(id));
+if(!p)return;cart[id]=Math.min((cart[id]||0)+1,Number(p.stock||99));updateCart();say("পণ্যটি কার্টে যোগ হয়েছে।",true);}
 function buyNow(id){cart={[id]:1};updateCart();openCheckout();}
-function updateCart(){document.getElementById("cartCount").textContent=Object.values(cart).reduce((a,b)=>a+b,0);const rows=Object.entries(cart).map(([id,q])=>{const p=products.find(x=>String(x.id)===String(id));return p?{p,q}:null}).filter(Boolean);const subtotal=rows.reduce((s,x)=>s+Number(x.p.price)*x.q,0);document.getElementById("cartItems").innerHTML=rows.length?rows.map(({p,q})=>`<div class="cartrow"><div><strong>${safe(p.name)}</strong><div class="muted">${money(p.price)} × ${q}</div></div><div class="qty"><button class="secondary" onclick="changeQty('${safe(p.id)}',-1)">−</button><strong>${q}</strong><button class="secondary" onclick="changeQty('${safe(p.id)}',1)">+</button></div><button class="secondary" onclick="removeCart('${safe(p.id)}')">✕</button></div>`).join(""):"কার্ট খালি।";document.getElementById("cartSubtotal").textContent=money(subtotal);document.getElementById("checkoutSubtotal").textContent=money(subtotal);const delivery = getDeliveryCharge();
+function updateCart(){document.getElementById("cartCount").textContent=Object.values(cart).reduce((a,b)=>a+b,0);
+const rows=Object.entries(cart).map(([id,q])=>{const p=products.find(x=>String(x.id)===String(id));
+return p?{p,q}:null}).filter(Boolean);
+const subtotal=rows.reduce((s,x)=>s+Number(x.p.price)*x.q,0);
+document.getElementById("cartItems").innerHTML=rows.length?rows.map(({p,q})=>`<div class="cartrow"><div><strong>${safe(p.name)}</strong><div class="muted">${money(p.price)} × ${q}</div></div><div class="qty"><button class="secondary" onclick="changeQty('${safe(p.id)}',-1)">−</button><strong>${q}</strong><button class="secondary" onclick="changeQty('${safe(p.id)}',1)">+</button></div><button class="secondary" onclick="removeCart('${safe(p.id)}')">✕</button></div>`).join(""):"কার্ট খালি।";
+document.getElementById("cartSubtotal").textContent=money(subtotal);
+document.getElementById("checkoutSubtotal").textContent=money(subtotal);
+const delivery = getDeliveryCharge();
 
 document.getElementById("deliveryCharge").textContent = money(delivery);
-document.getElementById("grandTotal").textContent = money(subtotal + delivery);document.getElementById("checkoutItems").innerHTML=rows.map(({p,q})=>`<div class="summaryrow"><span>${safe(p.name)} × ${q}</span><strong>${money(Number(p.price)*q)}</strong></div>`).join("");}
-function changeQty(id,n){const p=products.find(x=>String(x.id)===String(id));if(!p)return;cart[id]=(cart[id]||0)+n;if(cart[id]<=0)delete cart[id];else cart[id]=Math.min(cart[id],Number(p.stock||99));updateCart();}
+document.getElementById("grandTotal").textContent = money(subtotal + delivery);
+document.getElementById("checkoutItems").innerHTML=rows.map(({p,q})=>`<div class="summaryrow"><span>${safe(p.name)} × ${q}</span><strong>${money(Number(p.price)*q)}</strong></div>`).join("");}
+function changeQty(id,n){const p=products.find(x=>String(x.id)===String(id));
+if(!p)return;cart[id]=(cart[id]||0)+n;if(cart[id]<=0)delete cart[id];
+else cart[id]=Math.min(cart[id],Number(p.stock||99));updateCart();}
 function removeCart(id){delete cart[id];updateCart();}
-function showCart(){document.getElementById("cartPanel").classList.remove("hidden");document.getElementById("cartPanel").scrollIntoView({behavior:"smooth"});}
+function showCart(){document.getElementById("cartPanel").classList.remove("hidden");
+document.getElementById("cartPanel").scrollIntoView({behavior:"smooth"});}
 function hideCart(){document.getElementById("cartPanel").classList.add("hidden");}
 function checkoutFromCart(){if(!Object.keys(cart).length){say("আগে কার্টে পণ্য যোগ করুন।");return}openCheckout();}
-function openCheckout(){if(!Object.keys(cart).length)return;updateCart();document.getElementById("cartPanel").classList.add("hidden");document.getElementById("checkoutPanel").classList.remove("hidden");document.getElementById("checkoutPanel").scrollIntoView({behavior:"smooth"});}
+function openCheckout(){if(!Object.keys(cart).length)return;updateCart();
+document.getElementById("cartPanel").classList.add("hidden");
+document.getElementById("checkoutPanel").classList.remove("hidden");
+document.getElementById("checkoutPanel").scrollIntoView({behavior:"smooth"});}
 function closeCheckout(){document.getElementById("checkoutPanel").classList.add("hidden");}
 document.querySelectorAll('input[name="payment"]').forEach(x=>x.addEventListener("change",()=>document.getElementById("paymentNumberField").style.display=x.value==="Cash on Delivery"?"none":"flex"));
-document.getElementById("orderForm").addEventListener("submit",async e=>{e.preventDefault();if(!Object.keys(cart).length)return;const btn=document.getElementById("placeOrder");if(!API_URL.startsWith("https://script.google.com/")){say("সাইটটি এখন ডেমো মোডে আছে। Google Sheets-এ অর্ডার পাঠাতে README-র সেটআপ ধাপ অনুসরণ করে Apps Script URL বসান।");return;}const items=Object.entries(cart).map(([id,q])=>{const p=products.find(x=>String(x.id)===String(id));return {id:p.id,name:p.name,quantity:q,price:Number(p.price)}});const subtotal=items.reduce((s,p)=>s+p.price*p.quantity,0);const delivery = getDeliveryCharge();const payload={action:"order",customer:document.getElementById("customer").value.trim(),phone:document.getElementById("phone").value.trim(),division:document.getElementById("division").value,district:document.getElementById("district").value.trim(),area:document.getElementById("area").value.trim(),address:document.getElementById("address").value.trim(),payment:document.querySelector('input[name="payment"]:checked').value,paymentNumber:document.getElementById("paymentNumber").value.trim(),note:document.getElementById("note").value.trim(),items,
-subtotal,
-delivery: delivery,
-total: subtotal + deliverybtn.disabled=true;btn.textContent="অর্ডার পাঠানো হচ্ছে…";try{const r=await fetch(API_URL,{method:"POST",body:JSON.stringify(payload)});const d=await r.json();if(!d.success)throw new Error(d.error||"Order failed");document.getElementById("result").classList.remove("hidden");document.getElementById("result").innerHTML=`<h2>✅ অর্ডার সফল হয়েছে!</h2><p>আপনার অর্ডার নম্বর: <strong>${safe(d.orderId)}</strong></p><p>আমরা অর্ডার নিশ্চিত করতে আপনার সঙ্গে যোগাযোগ করব।</p>`;cart={};updateCart();document.getElementById("orderForm").reset();closeCheckout();document.getElementById("result").scrollIntoView({behavior:"smooth"});}catch(err){say("অর্ডার জমা হয়নি। ইন্টারনেট ও Apps Script সেটআপ যাচাই করে আবার চেষ্টা করুন।");}finally{btn.disabled=false;btn.textContent="অর্ডার কনফার্ম করুন";}});
+document.getElementById("orderForm").addEventListener("submit",async e=>{e.preventDefault();if(!Object.keys(cart).length)return;
+const btn=document.getElementById("placeOrder");
+if(!API_URL.startsWith("https://script.google.com/")){say("সাইটটি এখন ডেমো মোডে আছে। Google Sheets-এ অর্ডার পাঠাতে README-র সেটআপ ধাপ অনুসরণ করে Apps Script URL বসান।");
+return;}const items=Object.entries(cart).map(([id,q])=>{const p=products.find(x=>String(x.id)===String(id));
+return {id:p.id,name:p.name,quantity:q,price:Number(p.price)}});
+const subtotal=items.reduce((s,p)=>s+p.price*p.quantity,0);
+const delivery = getDeliveryCharge();
+
+const payload = {
+  action: "order",
+  customer: document.getElementById("customer").value.trim(),
+  phone: document.getElementById("phone").value.trim(),
+  division: document.getElementById("division").value,
+  district: document.getElementById("district").value.trim(),
+  area: document.getElementById("area").value.trim(),
+  address: document.getElementById("address").value.trim(),
+  payment: document.querySelector('input[name="payment"]:checked').value,
+  paymentNumber: document.getElementById("paymentNumber").value.trim(),
+  note: document.getElementById("note").value.trim(),
+  items: items,
+  subtotal: subtotal,
+  delivery: delivery,
+  total: subtotal + delivery
+};
+
+btn.disabled = true;
+btn.textContent = "অর্ডার পাঠানো হচ্ছে…";
+									 
+try{const r=await fetch(API_URL,{method:"POST",body:JSON.stringify(payload)});
+const d=await r.json();if(!d.success)throw new Error(d.error||"Order failed");document.getElementById("result").classList.remove("hidden");document.getElementById("result").innerHTML=`<h2>✅ অর্ডার সফল হয়েছে!</h2><p>আপনার অর্ডার নম্বর: <strong>${safe(d.orderId)}</strong></p><p>আমরা অর্ডার নিশ্চিত করতে আপনার সঙ্গে যোগাযোগ করব।</p>`;cart={};updateCart();document.getElementById("orderForm").reset();closeCheckout();document.getElementById("result").scrollIntoView({behavior:"smooth"});}catch(err){say("অর্ডার জমা হয়নি। ইন্টারনেট ও Apps Script সেটআপ যাচাই করে আবার চেষ্টা করুন।");}finally{btn.disabled=false;btn.textContent="অর্ডার কনফার্ম করুন";}});
 document.getElementById("year").textContent=new Date().getFullYear();renderCategories();renderProducts();updateCart();loadProducts();
 document.getElementById("district").addEventListener("input", updateCart);
 </script>
