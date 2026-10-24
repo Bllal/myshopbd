@@ -32,7 +32,32 @@ header{background:white;border-bottom:1px solid var(--line);position:sticky;top:
 <div class="field full"><label>পেমেন্ট পদ্ধতি *</label><div class="pay-options"><label><input type="radio" name="payment" value="Cash on Delivery" checked> ক্যাশ অন ডেলিভারি</label><label><input type="radio" name="payment" value="bKash"> বিকাশ</label><label><input type="radio" name="payment" value="Nagad"> নগদ</label></div></div>
 <div class="field full" id="paymentNumberField" style="display:none"><label for="paymentNumber">পেমেন্ট নম্বর/ট্রানজ্যাকশন আইডি (প্রযোজ্য হলে)</label><input id="paymentNumber" maxlength="100" placeholder="পেমেন্টের পরে তথ্য দিন"></div>
 <div class="field full"><label for="note">অতিরিক্ত নির্দেশনা (ঐচ্ছিক)</label><textarea id="note" rows="2" maxlength="300"></textarea></div>
-<div class="field full"><div class="summaryrow"><span>ডেলিভারি চার্জ</span><strong id="deliveryCharge">৳৮০</strong></div><div class="summaryrow total"><span>সর্বমোট</span><strong id="grandTotal">৳০</strong></div><p class="muted">বিকাশ/নগদে টাকা পাঠানোর আগে দোকানের নিশ্চিত পেমেন্ট নম্বর সংগ্রহ করুন। এই ডেমোতে পেমেন্ট স্বয়ংক্রিয়ভাবে নেওয়া হয় না।</p></div>
+
+<div class="field full">
+  <label for="deliveryOption">ডেলিভারি এলাকা নির্বাচন করুন *</label>
+
+  <select id="deliveryOption" required>
+    <option value="80">ঢাকার ভিতরে — ৳৮০</option>
+    <option value="150" selected>ঢাকার বাইরে — ৳১৫০</option>
+  </select>
+
+  <div class="summaryrow">
+    <span>ডেলিভারি চার্জ</span>
+    <strong id="deliveryCharge">৳১৫০</strong>
+  </div>
+
+  <div class="summaryrow total">
+    <span>সর্বমোট</span>
+    <strong id="grandTotal">৳০</strong>
+  </div>
+
+  <p class="muted">
+    আপনার ঠিকানা অনুযায়ী সঠিক ডেলিভারি এলাকা নির্বাচন করুন।
+  </p>
+</div>
+
+<div class="summaryrow total"><span>সর্বমোট</span><strong id="grandTotal">৳০</strong>
+</div><p class="muted">বিকাশ/নগদে টাকা পাঠানোর আগে দোকানের নিশ্চিত পেমেন্ট নম্বর সংগ্রহ করুন। এই ডেমোতে পেমেন্ট স্বয়ংক্রিয়ভাবে নেওয়া হয় না।</p></div>
 <div class="field full"><button class="primary" id="placeOrder" type="submit">অর্ডার কনফার্ম করুন</button></div>
 </form></section>
 <div id="result" class="panel hidden"></div>
@@ -51,15 +76,9 @@ const DEMO_PRODUCTS = [
 let products=[...DEMO_PRODUCTS], cart={};
 const money=n=>"৳"+Number(n||0).toLocaleString("bn-BD");
  function getDeliveryCharge() {
-  const district = document.getElementById("district").value.trim();
-
-  // ঢাকা জেলার জন্য ৮০ টাকা
-  if (district === "ঢাকা" || district.toLowerCase() === "dhaka") {
-    return DHAKA_DELIVERY_CHARGE;
-  }
-
-  // অন্যান্য জেলার জন্য ১৫০ টাকা
-  return OUTSIDE_DHAKA_DELIVERY_CHARGE;
+  return Number(
+    document.getElementById("deliveryOption").value
+  );
 }
 const safe=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function say(msg,ok=false){const el=document.getElementById("message");el.textContent=msg;el.className="notice"+(ok?" success":"");}
@@ -119,19 +138,21 @@ const payload = {
   payment: document.querySelector('input[name="payment"]:checked').value,
   paymentNumber: document.getElementById("paymentNumber").value.trim(),
   note: document.getElementById("note").value.trim(),
-  items: items,
+    items: items,
   subtotal: subtotal,
   delivery: delivery,
   total: subtotal + delivery
 };
 
 btn.disabled = true;
-btn.textContent = "অর্ডার পাঠানো হচ্ছে…";;
+btn.textContent = "অর্ডার পাঠানো হচ্ছে…";
 									 
 try{const r=await fetch(API_URL,{method:"POST",body:JSON.stringify(payload)});
 const d=await r.json();if(!d.success)throw new Error(d.error||"Order failed");document.getElementById("result").classList.remove("hidden");document.getElementById("result").innerHTML=`<h2>✅ অর্ডার সফল হয়েছে!</h2><p>আপনার অর্ডার নম্বর: <strong>${safe(d.orderId)}</strong></p><p>আমরা অর্ডার নিশ্চিত করতে আপনার সঙ্গে যোগাযোগ করব।</p>`;cart={};updateCart();document.getElementById("orderForm").reset();closeCheckout();document.getElementById("result").scrollIntoView({behavior:"smooth"});}catch(err){say("অর্ডার জমা হয়নি। ইন্টারনেট ও Apps Script সেটআপ যাচাই করে আবার চেষ্টা করুন।");}finally{btn.disabled=false;btn.textContent="অর্ডার কনফার্ম করুন";}});
 document.getElementById("year").textContent=new Date().getFullYear();renderCategories();renderProducts();updateCart();loadProducts();
 document.getElementById("district").addEventListener("input", updateCart);
+	document.getElementById("deliveryOption")
+  .addEventListener("change", updateCart);
 </script>
 <!-- My Shop BD WhatsApp Button -->
 <a href="https://wa.me/8801710225471?text=আসসালামু%20আলাইকুম%2C%20আমি%20My%20Shop%20BD%20থেকে%20পণ্য%20সম্পর্কে%20জানতে%20চাই।"
