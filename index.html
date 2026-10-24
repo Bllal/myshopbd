@@ -79,6 +79,115 @@ header{background:white;border-bottom:1px solid var(--line);position:sticky;top:
     min-height: 3em;
   }
 }
+	
+.product-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.65);
+  padding: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-modal.show {
+  display: flex;
+}
+
+.product-modal-box {
+  background: #fff;
+  width: 100%;
+  max-width: 750px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  right: 12px;
+  top: 8px;
+  border: 0;
+  background: transparent;
+  font-size: 32px;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.product-modal-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding-top: 12px;
+}
+
+.modal-image-wrap {
+  min-width: 0;
+  background: #f5f5f5;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#modalProductImage {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+}
+
+.modal-info h2 {
+  margin: 0 30px 10px 0;
+}
+
+#modalProductPrice {
+  color: #13834b;
+  font-size: 25px;
+}
+
+#modalProductDescription {
+  white-space: pre-wrap;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.modal-cart-btn {
+  width: 100%;
+  padding: 13px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: 9px;
+  background: #13834b;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .product-modal {
+    padding: 10px;
+  }
+
+  .product-modal-box {
+    padding: 16px;
+    max-height: 94vh;
+  }
+
+  .product-modal-content {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .modal-image-wrap {
+    max-width: 320px;
+    width: 100%;
+    margin: auto;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -159,7 +268,9 @@ const cats=[...new Set(products.map(p=>p.category).filter(Boolean))];s.innerHTML
 function renderProducts(){const q=document.getElementById("search").value.toLowerCase(),cat=document.getElementById("category").value;
 const list=products.filter(p=>(p.name+" "+(p.description||"")).toLowerCase().includes(q)&&(!cat||p.category===cat));
 document.getElementById("productCount").textContent=list.length+"টি পণ্য";
-document.getElementById("products").innerHTML=list.map(p=>`<article class="card"><div class="photo">${p.image?`<img src="${safe(p.image)}" alt="${safe(p.name)}" onerror="this.parentElement.textContent='🛍️'">`:"🛍️"}</div><div class="cardbody"><h3>${safe(p.name)}</h3><div class="muted">${safe(p.category||"অন্যান্য")}</div><div class="price">${money(p.price)}</div><div class="muted">${safe(p.description||"")}</div><div class="actions"><button class="secondary" onclick="addCart('${safe(p.id)}')">কার্টে যোগ</button><button class="primary" onclick="buyNow('${safe(p.id)}')">Buy Now</button></div></div></article>`).join("")||"<p>কোনো পণ্য পাওয়া যায়নি।</p>";}
+document.getElementById("products").innerHTML=list.map(p=>`<article class="card"><div class="photo"
+     onclick="openProductDetails(product)"
+     style="cursor:pointer">${p.image?`<img src="${safe(p.image)}" alt="${safe(p.name)}" onerror="this.parentElement.textContent='🛍️'">`:"🛍️"}</div><div class="cardbody"><h3>${safe(p.name)}</h3><div class="muted">${safe(p.category||"অন্যান্য")}</div><div class="price">${money(p.price)}</div><div class="muted">${safe(p.description||"")}</div><div class="actions"><button class="secondary" onclick="addCart('${safe(p.id)}')">কার্টে যোগ</button><button class="primary" onclick="buyNow('${safe(p.id)}')">Buy Now</button></div></div></article>`).join("")||"<p>কোনো পণ্য পাওয়া যায়নি।</p>";}
 function addCart(id){const p=products.find(x=>String(x.id)===String(id));
 if(!p)return;cart[id]=Math.min((cart[id]||0)+1,Number(p.stock||99));updateCart();say("পণ্যটি কার্টে যোগ হয়েছে।",true);}
 function buyNow(id){cart={[id]:1};updateCart();openCheckout();}
@@ -223,6 +334,65 @@ document.getElementById("year").textContent=new Date().getFullYear();renderCateg
 document.getElementById("district").addEventListener("input", updateCart);
 	document.getElementById("deliveryOption")
   .addEventListener("change", updateCart);
+
+function openProductDetails(product) {
+  document.getElementById("modalProductImage").src =
+    product.image || "";
+
+  document.getElementById("modalProductImage").alt =
+    product.name || "প্রোডাক্ট";
+
+  document.getElementById("modalProductName").textContent =
+    product.name || "";
+
+  document.getElementById("modalProductCategory").textContent =
+    product.category || "";
+
+  document.getElementById("modalProductPrice").textContent =
+    "৳" + Number(product.price || 0).toLocaleString("en-BD");
+
+  document.getElementById("modalProductStock").textContent =
+    Number(product.stock || 0) > 0
+      ? "স্টক আছে"
+      : "স্টক শেষ";
+
+  document.getElementById("modalProductDescription").textContent =
+    product.description || "এই প্রোডাক্টের বিস্তারিত বিবরণ দেওয়া হয়নি।";
+
+  const cartButton = document.getElementById("modalAddToCart");
+
+  cartButton.disabled = Number(product.stock || 0) <= 0;
+  cartButton.textContent =
+    cartButton.disabled ? "স্টক শেষ" : "কার্টে যোগ করুন";
+
+  // এখানে আপনার বর্তমান কার্ট ফাংশন যুক্ত করতে হবে।
+  cartButton.onclick = function () {
+    addToCart(product.id);
+    closeProductModal();
+  };
+
+  document.getElementById("productModal").classList.add("show");
+  document.body.style.overflow = "hidden";
+}
+
+function closeProductModal(event) {
+  if (
+    event &&
+    event.target !== document.getElementById("productModal")
+  ) {
+    return;
+  }
+
+  document.getElementById("productModal").classList.remove("show");
+  document.body.style.overflow = "";
+}
+
+document.addEventListener("keydown", function (event) {
+  if (event.key === "Escape") {
+    closeProductModal();
+  }
+});
+
 </script>
 <!-- My Shop BD WhatsApp Button -->
 <a href="https://wa.me/8801710225471?text=আসসালামু%20আলাইকুম%2C%20আমি%20My%20Shop%20BD%20থেকে%20পণ্য%20সম্পর্কে%20জানতে%20চাই।"
@@ -234,4 +404,37 @@ document.getElementById("district").addEventListener("input", updateCart);
    font-family:Arial,sans-serif;box-shadow:0 3px 12px #0003;">
   WhatsApp-এ যোগাযোগ করুন
 </a>
-</body></html>
+	
+<!-- Product Details Popup -->
+<div id="productModal" class="product-modal" onclick="closeProductModal(event)">
+  <div class="product-modal-box">
+    <button class="modal-close" onclick="closeProductModal()"
+      aria-label="বন্ধ করুন">&times;</button>
+
+    <div class="product-modal-content">
+      <div class="modal-image-wrap">
+        <img id="modalProductImage" src="" alt="প্রোডাক্টের ছবি">
+      </div>
+
+      <div class="modal-info">
+        <h2 id="modalProductName"></h2>
+        <p id="modalProductCategory"></p>
+        <h3 id="modalProductPrice"></h3>
+        <p id="modalProductStock"></p>
+
+        <h4>প্রোডাক্টের বিবরণ</h4>
+        <p id="modalProductDescription"></p>
+
+        <button id="modalAddToCart" class="modal-cart-btn"
+          type="button">
+          কার্টে যোগ করুন
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
+
+</body>
+</html>
