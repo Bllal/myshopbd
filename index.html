@@ -187,11 +187,29 @@ header{background:white;border-bottom:1px solid var(--line);position:sticky;top:
     margin: auto;
   }
 }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--green);
+}
 
+.brand img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
 </style>
 </head>
 <body>
-<header><div class="wrap top"><div class="brand">🛍️ My Shop BD</div><button class="secondary" onclick="showCart()">🛒 কার্ট <span id="cartCount">0</span></button></div></header>
+<header><div class="wrap top">
+	<div class="brand">
+  <img src="logo.png" alt="My Shop BD Logo">
+  <span>My Shop BD</span>
+</div>
+	<button class="secondary" onclick="showCart()">🛒 কার্ট <span id="cartCount">0</span></button></div></header>
 <main class="wrap">
 <section class="hero"><h1>আপনার পছন্দের পণ্য, সহজেই ঘরে বসে</h1><p>সাশ্রয়ী দামে পছন্দের পণ্য অর্ডার করুন। ক্যাশ অন ডেলিভারি ও মোবাইল পেমেন্টের সুবিধা।</p></section>
 <div class="tools"><input id="search" placeholder="পণ্য খুঁজুন..." oninput="renderProducts()"><select id="category" onchange="renderProducts()" style="padding:12px;border:1px solid #ccd6d1;border-radius:9px;background:white"><option value="">সব ক্যাটাগরি</option></select></div>
