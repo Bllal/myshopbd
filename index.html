@@ -234,8 +234,6 @@ header{background:white;border-bottom:1px solid var(--line);position:sticky;top:
     আপনার ঠিকানা অনুযায়ী সঠিক ডেলিভারি এলাকা নির্বাচন করুন।
   </p>
 </div>
-
-<div class="summaryrow total"><span>সর্বমোট</span><strong id="grandTotal">৳০</strong>
 </div><p class="muted">বিকাশ/নগদে টাকা পাঠানোর আগে দোকানের নিশ্চিত পেমেন্ট নম্বর সংগ্রহ করুন। এই ডেমোতে পেমেন্ট স্বয়ংক্রিয়ভাবে নেওয়া হয় না।</p></div>
 <div class="field full"><button class="primary" id="placeOrder" type="submit">অর্ডার কনফার্ম করুন</button></div>
 </form></section>
@@ -265,12 +263,57 @@ async function loadProducts(){if(!API_URL.startsWith("https://script.google.com/
 const d=await r.json();if(d.products?.length)products=d.products;}catch(e){say("Google Sheets থেকে পণ্য লোড হয়নি; আপাতত নমুনা পণ্য দেখানো হচ্ছে।");}renderCategories();renderProducts();}
 function renderCategories(){const s=document.getElementById("category"),old=s.value;
 const cats=[...new Set(products.map(p=>p.category).filter(Boolean))];s.innerHTML='<option value="">সব ক্যাটাগরি</option>'+cats.map(c=>`<option>${safe(c)}</option>`).join("");s.value=old;}
-function renderProducts(){const q=document.getElementById("search").value.toLowerCase(),cat=document.getElementById("category").value;
-const list=products.filter(p=>(p.name+" "+(p.description||"")).toLowerCase().includes(q)&&(!cat||p.category===cat));
-document.getElementById("productCount").textContent=list.length+"টি পণ্য";
-document.getElementById("products").innerHTML=list.map(p=>`<article class="card"><div class="photo"
-     onclick="openProductDetails(product)"
-     style="cursor:pointer">${p.image?`<img src="${safe(p.image)}" alt="${safe(p.name)}" onerror="this.parentElement.textContent='🛍️'">`:"🛍️"}</div><div class="cardbody"><h3>${safe(p.name)}</h3><div class="muted">${safe(p.category||"অন্যান্য")}</div><div class="price">${money(p.price)}</div><div class="muted">${safe(p.description||"")}</div><div class="actions"><button class="secondary" onclick="addCart('${safe(p.id)}')">কার্টে যোগ</button><button class="primary" onclick="buyNow('${safe(p.id)}')">Buy Now</button></div></div></article>`).join("")||"<p>কোনো পণ্য পাওয়া যায়নি।</p>";}
+
+function renderProducts() {
+  const q = document.getElementById("search").value.toLowerCase();
+  const cat = document.getElementById("category").value;
+
+  const list = products.filter(p =>
+    (p.name + " " + (p.description || "")).toLowerCase().includes(q) &&
+    (!cat || p.category === cat)
+  );
+
+  document.getElementById("productCount").textContent =
+    list.length + "টি পণ্য";
+
+  document.getElementById("products").innerHTML = list.map(p => `
+    <article class="card">
+      <div class="photo"
+           data-product-id="${safe(p.id)}"
+           onclick="openProductById(this.dataset.productId)"
+           style="cursor:pointer">
+        ${p.image
+          ? `<img src="${safe(p.image)}" alt="${safe(p.name)}"
+               onerror="this.parentElement.textContent='🛍️'">`
+          : "🛍️"}
+      </div>
+
+      <div class="cardbody">
+        <h3 data-product-id="${safe(p.id)}"
+            onclick="openProductById(this.dataset.productId)"
+            style="cursor:pointer">
+          ${safe(p.name)}
+        </h3>
+
+        <div class="muted">${safe(p.category || "অন্যান্য")}</div>
+        <div class="price">${money(p.price)}</div>
+        <div class="muted">${safe(p.description || "")}</div>
+
+        <div class="actions">
+          <button class="secondary"
+            onclick="addCart('${safe(p.id)}')">
+            কার্টে যোগ
+          </button>
+          <button class="primary"
+            onclick="buyNow('${safe(p.id)}')">
+            Buy Now
+          </button>
+        </div>
+      </div>
+    </article>
+  `).join("") || "<p>কোনো পণ্য পাওয়া যায়নি।</p>";
+}
+
 function addCart(id){const p=products.find(x=>String(x.id)===String(id));
 if(!p)return;cart[id]=Math.min((cart[id]||0)+1,Number(p.stock||99));updateCart();say("পণ্যটি কার্টে যোগ হয়েছে।",true);}
 function buyNow(id){cart={[id]:1};updateCart();openCheckout();}
@@ -334,7 +377,17 @@ document.getElementById("year").textContent=new Date().getFullYear();renderCateg
 document.getElementById("district").addEventListener("input", updateCart);
 	document.getElementById("deliveryOption")
   .addEventListener("change", updateCart);
+	
+function openProductById(id) {
+  const product = products.find(
+    p => String(p.id) === String(id)
+  );
 
+  if (product) {
+    openProductDetails(product);
+  }
+}
+	
 function openProductDetails(product) {
   document.getElementById("modalProductImage").src =
     product.image || "";
@@ -367,9 +420,9 @@ function openProductDetails(product) {
 
   // এখানে আপনার বর্তমান কার্ট ফাংশন যুক্ত করতে হবে।
   cartButton.onclick = function () {
-    addToCart(product.id);
-    closeProductModal();
-  };
+  addCart(product.id);
+  closeProductModal();
+};
 
   document.getElementById("productModal").classList.add("show");
   document.body.style.overflow = "hidden";
@@ -433,8 +486,5 @@ document.addEventListener("keydown", function (event) {
     </div>
   </div>
 </div>
-</body>
-</html>
-
 </body>
 </html>
