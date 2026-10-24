@@ -67,4 +67,15 @@ function closeCheckout(){document.getElementById("checkoutPanel").classList.add(
 document.querySelectorAll('input[name="payment"]').forEach(x=>x.addEventListener("change",()=>document.getElementById("paymentNumberField").style.display=x.value==="Cash on Delivery"?"none":"flex"));
 document.getElementById("orderForm").addEventListener("submit",async e=>{e.preventDefault();if(!Object.keys(cart).length)return;const btn=document.getElementById("placeOrder");if(!API_URL.startsWith("https://script.google.com/")){say("সাইটটি এখন ডেমো মোডে আছে। Google Sheets-এ অর্ডার পাঠাতে README-র সেটআপ ধাপ অনুসরণ করে Apps Script URL বসান।");return;}const items=Object.entries(cart).map(([id,q])=>{const p=products.find(x=>String(x.id)===String(id));return {id:p.id,name:p.name,quantity:q,price:Number(p.price)}});const subtotal=items.reduce((s,p)=>s+p.price*p.quantity,0);const payload={action:"order",customer:document.getElementById("customer").value.trim(),phone:document.getElementById("phone").value.trim(),division:document.getElementById("division").value,district:document.getElementById("district").value.trim(),area:document.getElementById("area").value.trim(),address:document.getElementById("address").value.trim(),payment:document.querySelector('input[name="payment"]:checked').value,paymentNumber:document.getElementById("paymentNumber").value.trim(),note:document.getElementById("note").value.trim(),items,subtotal,delivery:DELIVERY_CHARGE,total:subtotal+DELIVERY_CHARGE};btn.disabled=true;btn.textContent="অর্ডার পাঠানো হচ্ছে…";try{const r=await fetch(API_URL,{method:"POST",body:JSON.stringify(payload)});const d=await r.json();if(!d.success)throw new Error(d.error||"Order failed");document.getElementById("result").classList.remove("hidden");document.getElementById("result").innerHTML=`<h2>✅ অর্ডার সফল হয়েছে!</h2><p>আপনার অর্ডার নম্বর: <strong>${safe(d.orderId)}</strong></p><p>আমরা অর্ডার নিশ্চিত করতে আপনার সঙ্গে যোগাযোগ করব।</p>`;cart={};updateCart();document.getElementById("orderForm").reset();closeCheckout();document.getElementById("result").scrollIntoView({behavior:"smooth"});}catch(err){say("অর্ডার জমা হয়নি। ইন্টারনেট ও Apps Script সেটআপ যাচাই করে আবার চেষ্টা করুন।");}finally{btn.disabled=false;btn.textContent="অর্ডার কনফার্ম করুন";}});
 document.getElementById("year").textContent=new Date().getFullYear();renderCategories();renderProducts();updateCart();loadProducts();
-</script></body></html>
+</script>
+<!-- My Shop BD WhatsApp Button -->
+<a href="https://wa.me/8801710225471?text=আসসালামু%20আলাইকুম%2C%20আমি%20My%20Shop%20BD%20থেকে%20পণ্য%20সম্পর্কে%20জানতে%20চাই।"
+   target="_blank"
+   rel="noopener noreferrer"
+   style="position:fixed;right:18px;bottom:18px;z-index:9999;
+   background:#25D366;color:white;padding:13px 18px;
+   border-radius:30px;text-decoration:none;font-weight:bold;
+   font-family:Arial,sans-serif;box-shadow:0 3px 12px #0003;">
+  WhatsApp-এ যোগাযোগ করুন
+</a>
+</body></html>
