@@ -244,13 +244,8 @@ header{background:white;border-bottom:1px solid var(--line);position:sticky;top:
 const API_URL = "https://script.google.com/macros/s/AKfycbyI6LtmP2uDNkunWrTYDiqV7Nh_D5fvrtEq_ofNZrnLeKkdFxVsYc80lLUpavT0MgLz/exec";
 const DHAKA_DELIVERY_CHARGE = 80;
 const OUTSIDE_DHAKA_DELIVERY_CHARGE = 150;;
-const DEMO_PRODUCTS = [
- {id:"P001",name:"2 In 1 ম্যাজিক পিঠা মেকার",price:500,category:"কিচেন ও হোম",image:"",description:"সহজে পিঠা ও ছোট রুটি তৈরির উপযোগী।",stock:20},
- {id:"P002",name:"মাল্টি-পারপাস কিচেন টুল",price:350,category:"কিচেন ও হোম",image:"",description:"দৈনন্দিন রান্নাঘরের কাজে সহায়ক।",stock:15},
- {id:"P003",name:"হোম অর্গানাইজার",price:450,category:"ঘর সাজানো",image:"",description:"ঘরের জিনিস গুছিয়ে রাখতে ব্যবহার করুন।",stock:10},
- {id:"P004",name:"মোবাইল স্ট্যান্ড",price:220,category:"ইলেকট্রনিক্স",image:"",description:"ভিডিও দেখা ও অনলাইন মিটিংয়ের জন্য।",stock:25}
-];
-let products=[...DEMO_PRODUCTS], cart={};
+let products = [];
+let cart = {};
 const money=n=>"৳"+Number(n||0).toLocaleString("bn-BD");
  function getDeliveryCharge() {
   return Number(
